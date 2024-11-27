@@ -1,44 +1,48 @@
-const express = require("express");
-const cors = require("cors");
-require("dotenv").config();
-const app = express();
-const port = process.env.PORT || 4000;
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const express = require('express');
+const nodemailer = require('nodemailer');
+const cors = require('cors');
+require('dotenv').config();  
 
-// middleware
+// Initialize the app
+const app = express();
+const port = 3010;
+
+// Enable CORS 
 app.use(cors());
+
+// Middleware 
 app.use(express.json());
 
-
-/// mongodb
-const url = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.ia4w5yl.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
-
-
-// Create a MongoClient
-const client = new MongoClient(url, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  },
-});
-
-const dbConnect = async () => {
-  try {
-    client.connect();
-    console.log("Database connected successfully");
-  } catch (error) {
-    console.log(error.name, error.message);
+// SMTP configuration
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.SMTP_USER,  
+    pass: process.env.SMTP_PASS  
   }
-};
-
-// call the function
-dbConnect();
-
-// api
-app.get("/", (req, res) => {
-  res.send("Mail Server is running");
 });
+
+// send the email
+app.post('/send-email', (req, res) => {
+  const { to, subject, text } = req.body;
+
+  // demo template 
+  const mailOptions = {
+    from: process.env.SMTP_USER, 
+    to: to,                     
+    subject: subject,           
+    text: text                 
+  };
+
+  transporter.sendMail(mailOptions, (error, info) => {
+    if (error) {
+      return res.status(500).json({ message: error.toString() });
+    }
+    res.status(200).json({ message: 'Email sent: ' + info.response });
+  });
+});
+
+// Start the server
 app.listen(port, () => {
-  console.log(`Mail Server is running on port, ${port}`);
+  console.log(`Server running on http://localhost:${port}`);
 });
