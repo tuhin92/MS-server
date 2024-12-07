@@ -28,7 +28,7 @@ const transporter = nodemailer.createTransport({
 });
 
 // Root route
-app.get('/', (req, res) => {
+app.get('/send-email', (req, res) => {
   res.send('Welcome to the Email Sending Service!');
 });
 
