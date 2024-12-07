@@ -5,12 +5,17 @@ require('dotenv').config();
 
 // Initialize the app
 const app = express();
-const port = 3010;
+const port = process.env.PORT || 3010;
 
-// Enable CORS 
-app.use(cors());
+// Enable CORS
+const corsOptions = {
+  origin: '*', // Update to your frontend domain for production
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type']
+};
+app.use(cors(corsOptions));
 
-// Middleware 
+// Middleware
 app.use(express.json());
 
 // SMTP configuration
@@ -22,23 +27,30 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-// send the email
+// Root route
+app.get('/', (req, res) => {
+  res.send('Welcome to the Email Sending Service!');
+});
+
+// Email sending route
 app.post('/send-email', (req, res) => {
   const { to, subject, text } = req.body;
 
-  // demo template 
+  // Email options
   const mailOptions = {
-    from: process.env.SMTP_USER, 
-    to: to,                     
-    subject: subject,           
-    text: text                 
+    from: process.env.SMTP_USER,
+    to,
+    subject,
+    text
   };
 
+  // Send email
   transporter.sendMail(mailOptions, (error, info) => {
     if (error) {
-      return res.status(500).json({ message: error.toString() });
+      console.error('Error occurred while sending email:', error);
+      return res.status(500).json({ message: 'An error occurred while sending the email.' });
     }
-    res.status(200).json({ message: 'Email sent: ' + info.response });
+    res.status(200).json({ message: `Email sent successfully to ${to}.` });
   });
 });
 
